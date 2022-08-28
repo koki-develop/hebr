@@ -1,9 +1,12 @@
 package hebr
 
 func toblocks(bits []bool, size int, pad bool) [][]bool {
-	l := len(bits)/size + 1
-	blocks := make([][]bool, 0, l)
+	l := len(bits) / size
+	if len(bits)%size != 0 {
+		l++
+	}
 
+	blocks := make([][]bool, 0, l)
 	for i := 0; i < len(bits); i += size {
 		end := i + size
 		if len(bits) < end {
