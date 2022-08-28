@@ -73,7 +73,7 @@ $ go get github.com/koki-develop/hebr
 
 ### Import
 
-```
+```go
 import "github.com/koki-develop/hebr"
 ```
 
