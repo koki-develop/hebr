@@ -1,34 +1,64 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
+	"fmt"
+	"io"
 	"os"
+	"strings"
+	"unicode"
 
+	"github.com/koki-develop/hebr"
 	"github.com/spf13/cobra"
 )
 
-
-
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "cmd",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Use:  "cmd",
+	Args: cobra.MaximumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		var src []byte
+		if len(args) == 0 {
+			data, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				return err
+			}
+			src = data
+		} else {
+			filename := args[0]
+			f, err := os.Open(filename)
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+			data, err := io.ReadAll(f)
+			if err != nil {
+				return err
+			}
+			src = data
+		}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+		dec, err := cmd.Flags().GetBool("decode")
+		if err != nil {
+			return err
+		}
+
+		if dec {
+			decoded, err := hebr.Decode([]byte(strings.TrimRightFunc(string(src), unicode.IsSpace)))
+			if err != nil {
+				return err
+			}
+			fmt.Print(string(decoded))
+		} else {
+			encoded, err := hebr.Encode(src)
+			if err != nil {
+				return err
+			}
+			fmt.Print(string(encoded))
+		}
+
+		return nil
+	},
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -37,15 +67,5 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cmd.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().BoolP("decode", "d", false, "decodes data")
 }
-
-
